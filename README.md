@@ -1,155 +1,175 @@
-# BlueFix — Taller de reparaciones
+# BlueFix – Sistema de Gestión de Taller Técnico
 
-Aplicación web para gestionar un taller de reparación de equipos electrónicos. Está construida con React + Vite y se comunica con PocketBase mediante su API REST usando `fetch`, sin instalar el SDK.
+BlueFix es una aplicación web desarrollada con **React, Vite y PocketBase**, diseñada para gestionar las operaciones de un taller de reparación técnica.
 
-## Funcionalidades
+El sistema permite administrar clientes, registrar órdenes de reparación, controlar el estado de los trabajos y consultar el historial de eventos de cada orden.
 
-- Panel con resumen de órdenes, clientes y etapas.
-- Registro y consulta de clientes.
-- Registro de órdenes con equipo, problema y hasta 3 fotografías.
-- Diagnóstico, mano de obra y lista de piezas.
-- Cálculo automático del presupuesto (no se almacena el total).
-- Aprobación o rechazo del presupuesto.
-- Avance de las órdenes según las transiciones permitidas.
-- Historial de cambios de estado.
-- Configuración de la URL del servidor desde la sección Conexión.
-- Navegación SPA con rutas anidadas, `Outlet`, parámetro `/ordenes/:id` y página 404.
+## Tecnologías utilizadas
 
-## 1. Requisitos
+### Frontend
+- React
+- JavaScript
+- Vite
+- React Router
+- CSS
+- Fetch API para las peticiones HTTP
 
-- Node.js 20.19+ o 22.12+.
-- npm.
-- PocketBase (versión reciente).
+### Backend
+- PocketBase
+- JavaScript para las migraciones y hooks
+- Base de datos SQLite integrada en PocketBase
 
-## 2. Instalar y arrancar la web
+## Funcionalidades principales
 
-Desde la carpeta del proyecto:
+### Gestión de clientes
+- Registrar nuevos clientes.
+- Consultar los clientes registrados.
+- Asociar órdenes de reparación a cada cliente.
+- Consultar las órdenes relacionadas con un cliente.
+
+### Gestión de órdenes
+- Crear órdenes de reparación.
+- Registrar el equipo y el problema reportado.
+- Adjuntar fotografías del equipo.
+- Consultar el detalle de cada orden.
+- Consultar el historial de cambios de estado.
+
+### Seguimiento de reparaciones
+
+Las órdenes siguen un flujo de estados controlado:
+
+1. Solicitada.
+2. En diagnóstico.
+3. Presupuestada.
+4. Aprobada o rechazada.
+5. En reparación.
+6. Lista para entregar.
+7. Entregada.
+
+También se permite cancelar una orden mientras se encuentra en estado solicitada.
+
+### Presupuestos
+- Registrar el diagnóstico técnico.
+- Establecer el costo de mano de obra.
+- Registrar las piezas necesarias y sus precios.
+- Calcular automáticamente el total del presupuesto.
+
+El total se calcula mediante la suma de la mano de obra y el costo de las piezas según sus cantidades.
+
+### Historial de eventos
+- Registrar los cambios de estado de las órdenes.
+- Guardar el estado anterior y el nuevo.
+- Consultar la evolución de cada reparación.
+
+## Estructura del proyecto
+
+```text
+taller_react_pocketbase/
+│
+├── servidor/
+│   ├── pb_hooks/
+│   ├── pb_migrations/
+│   └── pocketbase.exe
+│
+├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── lib/
+│   ├── App.jsx
+│   └── main.jsx
+│
+├── public/
+├── index.html
+├── package.json
+├── package-lock.json
+├── vite.config.js
+└── README.md
+```
+
+## Requisitos
+
+- Node.js y npm.
+- PocketBase.
+- Navegador web moderno.
+
+## Instalación y ejecución
+
+### 1. Clonar el repositorio
+
+```bash
+git clone URL_DEL_REPOSITORIO
+cd taller_react_pocketbase
+```
+
+### 2. Instalar dependencias
 
 ```bash
 npm install
 ```
 
-Copia `.env.example` a `.env` y ajusta la dirección si PocketBase no está en la máquina local:
+### 3. Iniciar PocketBase
 
-```env
-VITE_POCKETBASE_URL=http://127.0.0.1:8090
+Descargar PocketBase desde su página oficial:
+
+https://pocketbase.io/docs/
+
+Colocar el ejecutable correspondiente dentro de la carpeta `servidor` y ejecutar:
+
+```powershell
+cd servidor
+.\pocketbase.exe serve
 ```
 
-Inicia Vite:
+PocketBase estará disponible por defecto en:
+
+```text
+http://127.0.0.1:8090
+```
+
+El panel de administración se encuentra en:
+
+```text
+http://127.0.0.1:8090/_/
+```
+
+Las migraciones del proyecto se encuentran en `servidor/pb_migrations`. Al iniciar PocketBase, este puede aplicarlas automáticamente.
+
+### 4. Iniciar React
+
+Abrir otra terminal, regresar a la raíz del proyecto y ejecutar:
 
 ```bash
 npm run dev
 ```
 
-Abre la dirección que indique Vite, normalmente `http://localhost:5173`.
-
-También puedes cambiar la dirección desde **Conexión** en la propia aplicación. Esa dirección se guarda en el navegador.
-
-## 3. Preparar PocketBase
-
-1. Descarga y descomprime PocketBase.
-2. Copia la carpeta `pb_migrations` de este repositorio dentro de la carpeta de datos de PocketBase.
-3. Copia `pb_hooks/ordenes.pb.js` dentro de `pb_hooks`.
-4. Inicia PocketBase desde su carpeta:
-
-```bash
-./pocketbase serve
-```
-
-En Windows:
-
-```powershell
-.\pocketbase.exe serve
-```
-
-PocketBase aplica las migraciones pendientes al arrancar. Abre el panel administrativo de PocketBase y comprueba que existen las colecciones `clientes`, `ordenes` y `eventos`.
-
-Si las carpetas `pb_migrations` o `pb_hooks` no existen en el directorio de PocketBase, créalas.
-
-## 4. Reglas de acceso
-
-El sistema no tiene autenticación, de acuerdo con el enunciado. La migración deja lectura y creación públicas para las colecciones necesarias, bloquea la eliminación de órdenes y clientes, y bloquea la modificación/eliminación de eventos.
-
-**Importante:** al no haber autenticación, cualquier persona que pueda alcanzar el servidor podría leer o crear datos. Esto es adecuado únicamente para el entorno académico controlado. No publiques esta configuración en Internet con datos reales.
-
-La regla pública de actualización de `ordenes` permite que el frontend solicite cambios; el hook `pb_hooks/ordenes.pb.js` valida las transiciones y protege el presupuesto. No elimines ese hook.
-
-## 5. Modelo de datos
-
-Los nombres de colecciones y campos respetan el enunciado:
-
-### `clientes`
-- `nombre` (texto)
-- `telefono` (texto)
-
-### `ordenes`
-- `cliente` (relación requerida con `clientes`)
-- `equipo` (texto)
-- `problema` (texto)
-- `estado` (select)
-- `diagnostico` (texto)
-- `manoObra` (número)
-- `piezas` (JSON)
-- `fotos` (hasta 3 imágenes)
-
-### `eventos`
-- `orden` (relación con `ordenes`)
-- `de` (texto)
-- `a` (texto)
-- `created` (automático de PocketBase)
-
-El total del presupuesto se calcula en el navegador a partir de mano de obra y piezas. No se guarda en PocketBase.
-
-## 6. Datos de prueba
-
-Después de aplicar la migración, puedes crear manualmente desde el panel de PocketBase:
-
-**Clientes**
-- Ana Pérez — 555-0101
-- Luis Gómez — 555-0102
-
-**Órdenes sugeridas**
-- Laptop Lenovo — solicitada
-- iPhone 12 — en_diagnostico
-- Televisor Samsung — en_reparacion
-
-Para probar el historial, cambia los estados respetando el orden. Los cambios hechos mediante la API también pasan por el hook.
-
-## 7. Compilar para producción
-
-```bash
-npm run build
-```
-
-Los archivos finales quedan en `dist/`.
-
-## 8. Estructura
+La aplicación estará disponible normalmente en:
 
 ```text
-taller_react_pocketbase/
-├── pb_hooks/
-│   └── ordenes.pb.js
-├── pb_migrations/
-│   └── 1730000000_create_taller_collections.js
-├── src/
-│   ├── components/
-│   ├── lib/
-│   │   └── pocketbase.js
-│   ├── pages/
-│   ├── App.jsx
-│   ├── main.jsx
-│   └── styles.css
-├── .env.example
-├── index.html
-├── package.json
-└── README.md
+http://localhost:5173/
 ```
 
-## Notas de implementación
+## Configuración
 
-- La capa `src/lib/pocketbase.js` concentra las llamadas HTTP. Si cambia la dirección del servidor, no hay que modificar las pantallas.
-- Las rutas comparten un diseño principal mediante `Outlet`.
-- El detalle de cada orden usa el parámetro `:id`.
-- Las peticiones se realizan con `fetch`.
-- El historial se consulta desde `eventos`; la interfaz no crea eventos directamente.
-- La aplicación no incorpora autenticación ni roles.
+La aplicación utiliza PocketBase como backend y realiza las peticiones HTTP mediante la Fetch API.
+
+La dirección del servidor puede configurarse mediante la variable de entorno:
+
+```env
+VITE_POCKETBASE_URL=http://127.0.0.1:8090
+```
+
+## Consideraciones
+
+- PocketBase debe estar ejecutándose para utilizar las funcionalidades de la aplicación.
+- La carpeta `servidor/pb_data` contiene los datos locales de PocketBase y no se incluye en el repositorio.
+- El ejecutable de PocketBase debe descargarse por separado.
+- Las migraciones y hooks forman parte del código del backend.
+- No se utiliza un SDK de PocketBase; las comunicaciones se realizan mediante solicitudes HTTP con `fetch`.
+
+## Autor
+
+Proyecto académico desarrollado como parte de una asignatura de desarrollo web.
+
+## Licencia
+
+Proyecto de carácter académico y educativo.
